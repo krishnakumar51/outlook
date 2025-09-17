@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-FIXED CAPTCHA: Working Agentic Outlook Account Creation
-- Uses EXACT advanced CAPTCHA solving from comp.py  
-- BUT with 10 seconds instead of 15 seconds as requested
-- All other methods remain the same as exact_replica.py
+FINAL CORRECTED FLOW: Agentic Outlook Account Creation to Inbox
+- Uses the EXACT flow sequence you specified
+- Looks for "INBOX" instead of "Search" for success detection
+- Authentication → Your Data, Your Way → Add another account → Getting Better Together → Powering Your Experiences → INBOX
 """
 
 import os
@@ -60,15 +60,14 @@ else:
     print("🔧 Using pattern matching only (no API key set)")
 
 def analyze_screen_content(ocr_text):
-    """ENHANCED version of your agent.py with better debugging and fallbacks"""
+    """CORRECTED agent with EXACT flow sequence"""
     print(f'🔍 OCR Text (first 200 chars): {ocr_text[:200]}...')
     print(f'🔍 OCR Text (full length): {len(ocr_text)} characters')
     
-    # First try pattern matching (this always works)
     def pattern_match_fallback(text):
         print("🔧 Using pattern matching...")
         
-        # EXACT same patterns as your agent.py
+        # ORIGINAL PATTERNS (account creation)
         if 'CREATE NEW ACCOUNT' in text:
             result = '{"action": "click", "element_type": "button", "element_identifier": "CREATE NEW ACCOUNT"}'
             print(f"✅ Pattern matched: CREATE NEW ACCOUNT")
@@ -93,66 +92,98 @@ def analyze_screen_content(ocr_text):
             result = '{"action": "solve_captcha", "element_type": "press_and_hold", "element_identifier": "Captcha"}'
             print(f"✅ Pattern matched: Let's prove you're human")
             return result
+            
+        # CORRECTED POST-CAPTCHA FLOW (exact sequence you provided)
+        elif 'Authentication' in text or 'authenticating' in text or 'Please wait' in text:
+            result = '{"action": "wait_auth", "element_type": "loading", "element_identifier": "Authentication"}'
+            print(f"✅ Pattern matched: Authentication/Please wait")
+            return result
+        elif 'Your Data, Your Way' in text or 'Your data, your way' in text:
+            result = '{"action": "click_next", "element_type": "button", "element_identifier": "NEXT"}'
+            print(f"✅ Pattern matched: Your Data, Your Way")
+            return result
+        elif 'Add another account' in text or 'Would you like to add another account' in text:
+            result = '{"action": "click_maybe_later", "element_type": "button", "element_identifier": "MAYBE LATER"}'
+            print(f"✅ Pattern matched: Add another account")
+            return result
+        elif 'Getting Better Together' in text or 'Getting better together' in text:
+            result = '{"action": "click_accept", "element_type": "button", "element_identifier": "ACCEPT"}'
+            print(f"✅ Pattern matched: Getting Better Together")
+            return result
+        elif 'Powering Your Experiences' in text or 'Powering your experiences' in text:
+            result = '{"action": "click_continue", "element_type": "button", "element_identifier": "CONTINUE TO OUTLOOK"}'
+            print(f"✅ Pattern matched: Powering Your Experiences")
+            return result
+            
+        # CORRECTED SUCCESS DETECTION (look for INBOX instead of Search)
+        elif 'INBOX' in text.upper() or 'Inbox' in text:
+            result = '{"action": "inbox_reached", "element_type": "success", "element_identifier": "INBOX"}'
+            print(f"🎉 Pattern matched: INBOX REACHED!")
+            return result
+            
         else:
-            print("⚠️ No patterns matched. Returning empty JSON.")
+            print("⚠️ No patterns matched. Checking for common UI elements...")
+            
+            # Look for common button texts
+            lines = text.split('\\n')
+            for line in lines:
+                line_clean = line.strip().upper()
+                if 'NEXT' in line_clean:
+                    result = '{"action": "click_next", "element_type": "button", "element_identifier": "NEXT"}'
+                    print(f"✅ Found NEXT button in line: {line.strip()}")
+                    return result
+                elif 'MAYBE LATER' in line_clean or 'NOT NOW' in line_clean:
+                    result = '{"action": "click_maybe_later", "element_type": "button", "element_identifier": "MAYBE LATER"}'
+                    print(f"✅ Found MAYBE LATER button in line: {line.strip()}")
+                    return result
+                elif 'CONTINUE' in line_clean and 'OUTLOOK' in line_clean:
+                    result = '{"action": "click_continue", "element_type": "button", "element_identifier": "CONTINUE TO OUTLOOK"}'
+                    print(f"✅ Found CONTINUE TO OUTLOOK in line: {line.strip()}")
+                    return result
+                elif 'ACCEPT' in line_clean:
+                    result = '{"action": "click_accept", "element_type": "button", "element_identifier": "ACCEPT"}'
+                    print(f"✅ Found ACCEPT button in line: {line.strip()}")
+                    return result
+                elif 'INBOX' in line_clean:
+                    result = '{"action": "inbox_reached", "element_type": "success", "element_identifier": "INBOX"}'
+                    print(f"🎉 Found INBOX - SUCCESS!")
+                    return result
+            
+            print("⚠️ No specific patterns found. Will wait and retry...")
             print(f"🔍 Available text snippets:")
-            lines = text.split('\\n')[:10]  # Show first 10 lines
-            for i, line in enumerate(lines):
+            for i, line in enumerate(lines[:15]):  # Show first 15 lines
                 if line.strip():
                     print(f"   Line {i}: '{line.strip()}'")
-            return '{}'
+            return '{"action": "wait", "element_type": "unknown", "element_identifier": "Unknown"}'
     
     # Try API first if available, then fallback to pattern matching
     if client:
-        system_prompt = """You are an expert in mobile app automation and UI interaction. Your task is to analyze OCR text extracted from a mobile app screen and determine the appropriate action to take based on the content. You will provide your response in JSON format, specifying the action, the type of UI element involved, and an identifier for that element."""
+        # Enhanced system prompt for corrected flow
+        system_prompt = """You are an expert in mobile app automation and UI interaction for Microsoft Outlook account creation. Your task is to analyze OCR text from mobile screens and determine actions. You handle both account creation screens AND post-CAPTCHA setup screens that lead to the inbox."""
 
-        user_prompt = f"""You are a JSON generator for mobile app automation. You will be provided with OCR text extracted from a mobile app screen and a description of the action needed. Your task is to generate a JSON object that specifies the action to be taken, the type of UI element involved, and an identifier for that element. You must strictly response in JSON format without any additional text or explanation or markdown formatting.
+        user_prompt = f"""Analyze this OCR text and generate the appropriate JSON action:
 
-OCR Text from screen: {ocr_text}
+OCR Text: {ocr_text}
 
-If the OCR Text contains the phrase 'CREATE NEW ACCOUNT' then generate this json response:
-{{
-"action": "click",
-"element_type": "button",
-"element_identifier": "CREATE NEW ACCOUNT"
-}}
+ACCOUNT CREATION ACTIONS:
+- 'CREATE NEW ACCOUNT' → {{"action": "click", "element_identifier": "CREATE NEW ACCOUNT"}}
+- 'Create your Microsoft account' → {{"action": "type_email", "element_identifier": "New email"}}  
+- 'Create your password' → {{"action": "type_password", "element_identifier": "Password"}}
+- 'Add your country/region and birthdate' → {{"action": "type_dob", "element_identifier": "DOB"}}
+- 'Add your name' → {{"action": "type_fullname", "element_identifier": "Full name"}}
+- 'Let's prove you're human' → {{"action": "solve_captcha", "element_identifier": "Captcha"}}
 
-Or if the OCR Text contains the phrase 'Create your Microsoft account' then generate this json response:
-{{
-"action": "type_email",
-"element_type": "input",
-"element_identifier": "New email"
-}}
+POST-CAPTCHA SETUP ACTIONS (EXACT FLOW):
+- 'Authentication'/'Please wait' → {{"action": "wait_auth", "element_identifier": "Authentication"}}
+- 'Your Data, Your Way' → {{"action": "click_next", "element_identifier": "NEXT"}}
+- 'Add another account' → {{"action": "click_maybe_later", "element_identifier": "MAYBE LATER"}}  
+- 'Getting Better Together' → {{"action": "click_accept", "element_identifier": "ACCEPT"}}
+- 'Powering Your Experiences' → {{"action": "click_continue", "element_identifier": "CONTINUE TO OUTLOOK"}}
 
-Or if the OCR Text contains the phrase 'Create your password' then generate this json response:
-{{
-"action": "type_password",
-"element_type": "input",
-"element_identifier": "Password"
-}}
+COMPLETION:
+- Text contains 'INBOX' or 'Inbox' → {{"action": "inbox_reached", "element_identifier": "INBOX"}}
 
-Or if the OCR Text contains the phrase 'Add your country/region and birthdate' then generate this json response:
-{{
-"action": "type_dob",
-"element_type": "input",
-"element_identifier": "DOB"
-}}
-
-Or if the OCR Text contains the phrase 'Add your name' then generate this json response:
-{{
-"action": "type_fullname",
-"element_type": "input",
-"element_identifier": "Full name"
-}}
-
-Or if the OCR Text contains the phrase 'Let's prove you're human' then generate this json response:
-{{
-"action": "solve_captcha",
-"element_type": "press_and_hold",
-"element_identifier": "Captcha"
-}}
-
-Note: Do not respond with any other actions or elements. Only respond with the specified actions and identifiers as per the conditions above. If none of the conditions are met, then generate the empty JSON response."""
+Return ONLY valid JSON. If no patterns match, return {{"action": "wait", "element_identifier": "Unknown"}}"""
 
         try:
             print("🤖 Trying Anthropic API...")
@@ -181,7 +212,6 @@ Note: Do not respond with any other actions or elements. Only respond with the s
 # ================== SETUP (ENHANCED FROM comp.py + main.py) ==================
 screenshots_folder = "screenshots"
 
-# ensure screenshots folder exists and clear it
 if not os.path.exists(screenshots_folder):
     os.makedirs(screenshots_folder, exist_ok=True)
 
@@ -193,12 +223,11 @@ for filename in os.listdir(screenshots_folder):
         except Exception:
             pass
 
-# ================== DRIVER SETUP (EXACT FROM comp.py - BULLETPROOF) ==================
+# ================== DRIVER SETUP (EXACT FROM comp.py) ==================
 def setup_driver():
-    """EXACT driver setup from comp.py - bulletproof version"""
     try:
         print("Setting up driver...")
-        device_name = "ZD222GXYPV"  # Update with your device ID
+        device_name = "ZD222GXYPV"  
         
         options = UiAutomator2Options()
         options.platform_name = 'Android'
@@ -224,7 +253,7 @@ def setup_driver():
         print(f"✗ Setup failed: {e}")
         return None, None, None
 
-# ================== EMAIL/PASSWORD GENERATION (EXACT FROM main.py) ==================
+# ================== ACTION METHODS (EXACT FROM main.py + ENHANCED) ==================
 def generate_outlook_email():
     first = "ivan"
     last = "lopez"
@@ -237,7 +266,6 @@ def generate_password():
     password = ''.join(random.choices(chars, k=15))
     return password
 
-# ================== ACTION METHODS (EXACT FROM main.py) ==================
 def press_button(driver, button_text):
     print(f'Waiting for button with text: {button_text}')
     try:
@@ -287,15 +315,13 @@ def choose_from_dropdown(driver, dropdown_text, resource_Id, value):
         print(f"Dropdown '{dropdown_text}' or option '{value}' not found: {e}")
         return False
 
-# ================== ADVANCED CAPTCHA SOLVING (FROM comp.py BUT 10 SECONDS) ==================
+# ================== ADVANCED CAPTCHA (FROM comp.py BUT 10 SECONDS) ==================
 def solve_captcha_advanced(driver, device_name, screen_size):
-    """EXACT advanced captcha method from comp.py but with 10 seconds as requested"""
+    """EXACT advanced captcha method from comp.py but with 10 seconds"""
     print("🔧 Using advanced CAPTCHA solving from comp.py (10 seconds)")
     time.sleep(3)
     
-    # Find CAPTCHA button using comp.py's bulletproof method
     def find_element_bulletproof(by, value, timeout=10, retry_attempts=3):
-        """Bulletproof element finding from comp.py"""
         for attempt in range(retry_attempts):
             try:
                 elements = WebDriverWait(driver, timeout).until(
@@ -303,7 +329,6 @@ def solve_captcha_advanced(driver, device_name, screen_size):
                 )
                 
                 if elements:
-                    # Filter for displayed elements
                     visible_elements = []
                     for elem in elements:
                         try:
@@ -313,7 +338,7 @@ def solve_captcha_advanced(driver, device_name, screen_size):
                             visible_elements.append(elem)
                     
                     if visible_elements:
-                        return visible_elements[0]  # Return first visible
+                        return visible_elements[0]
                 
                 time.sleep(0.5)
             except:
@@ -322,7 +347,6 @@ def solve_captcha_advanced(driver, device_name, screen_size):
         
         return None
     
-    # EXACT selectors from comp.py
     selectors = [
         (AppiumBy.ANDROID_UIAUTOMATOR, 'new UiSelector().className("android.widget.Button").textContains("Press").clickable(true).enabled(true)'),
         (AppiumBy.XPATH, "//android.widget.Button[contains(@text,'Press')]")
@@ -332,12 +356,11 @@ def solve_captcha_advanced(driver, device_name, screen_size):
     for by, selector in selectors:
         button = find_element_bulletproof(by, selector, timeout=8)
         if button:
-            print(f"✅ Found CAPTCHA button with selector: {by}")
+            print(f"✅ Found CAPTCHA button")
             break
     
     if button:
         try:
-            # Method 1: Get button location and use ADB with exact coordinates
             location = button.location
             size = button.size
             x = location['x'] + size['width'] // 2
@@ -345,11 +368,10 @@ def solve_captcha_advanced(driver, device_name, screen_size):
             
             print(f"📍 Button location: x={x}, y={y}")
             
-            # Method 1A: Try native long press first (but with 10 seconds)
             try:
                 driver.execute_script("mobile: longClickGesture", {
                     "elementId": button.id,
-                    "duration": 10000  # 10 seconds as requested
+                    "duration": 10000
                 })
                 print("✅ Native long press (10s)")
                 time.sleep(4)
@@ -357,10 +379,9 @@ def solve_captcha_advanced(driver, device_name, screen_size):
             except Exception as e:
                 print(f"⚠️ Native long press failed: {e}, trying ADB...")
             
-            # Method 1B: ADB with exact button coordinates (10 seconds)
             result = subprocess.run([
                 "adb", "-s", device_name, "shell", "input", "touchscreen", "swipe",
-                str(x), str(y), str(x), str(y), "10000"  # 10 seconds as requested
+                str(x), str(y), str(x), str(y), "10000"
             ], check=False, capture_output=True, text=True)
             
             if result.returncode == 0:
@@ -373,7 +394,6 @@ def solve_captcha_advanced(driver, device_name, screen_size):
         except Exception as e:
             print(f"❌ Button coordinate method failed: {e}")
     
-    # Method 2: Coordinate fallback using screen center (EXACT from comp.py)
     print("🔧 Using coordinate fallback...")
     x = screen_size['width'] // 2
     y = int(screen_size['height'] * 0.6)
@@ -382,7 +402,7 @@ def solve_captcha_advanced(driver, device_name, screen_size):
     
     result = subprocess.run([
         "adb", "-s", device_name, "shell", "input", "touchscreen", "swipe",
-        str(x), str(y), str(x), str(y), "10000"  # 10 seconds as requested
+        str(x), str(y), str(x), str(y), "10000"
     ], check=False, capture_output=True, text=True)
     
     if result.returncode == 0:
@@ -393,58 +413,50 @@ def solve_captcha_advanced(driver, device_name, screen_size):
         print(f"❌ All CAPTCHA methods failed. ADB error: {result.stderr}")
         return False
 
+# ================== ENHANCED ACTION HANDLER ==================
 def take_action(driver, device_name, screen_size, element_identifier, action):
-    """EXACT same as your main.py with ADVANCED CAPTCHA"""
+    """Enhanced action handler for ALL screen types"""
     try:
         if action == "click":
             success = press_button(driver, element_identifier)
             if success:
-                print(f"Clicked on '{element_identifier}'")
+                print(f"✅ Clicked on '{element_identifier}'")
             else:
-                print(f"Failed to click on '{element_identifier}'")
+                print(f"❌ Failed to click on '{element_identifier}'")
                 
         elif action == "type_email":
             email = generate_outlook_email()
             success_email = fill_input_field(driver, device_name, element_identifier, email)
             if success_email:
-                print(f"Typed email '{email}'")
+                print(f"✅ Typed email '{email}'")
             else:
-                print(f"Failed to type email.")
+                print(f"❌ Failed to type email.")
                 
         elif action == "type_password":
             password = generate_password()
             success_password = fill_input_field(driver, device_name, element_identifier, password)
             if success_password:
-                print(f"Typed password '{password}'")
+                print(f"✅ Typed password '{password}'")
             else:
-                print(f"Failed to type password.")
+                print(f"❌ Failed to type password.")
                 
         elif action == "type_dob":
-            # EXACT same as main.py
-            # select month
+            # DOB handling (exact same as main.py)
             random_month = random.randint(1, 12)
             month_text = calendar.month_name[random_month]
             success_month = choose_from_dropdown(driver, 'Month', 'BirthMonthDropdown', month_text)
             if success_month:
-                print(f"Typed Month '{month_text}'")
-            else:
-                print(f"Failed to type Month.")
-
-            # select day
+                print(f"✅ Selected Month '{month_text}'")
+            
             random_day = random.randint(1, 28)
             success_day = choose_from_dropdown(driver, 'Day', 'BirthDayDropdown', random_day)
             if success_day:
-                print(f"Typed Day '{random_day}'")
-            else:
-                print(f"Failed to type Day.")
-
-            # select year
+                print(f"✅ Selected Day '{random_day}'")
+            
             year = '2001'
             success_year = fill_input_field(driver, device_name, 'Year', year)
             if success_year:
-                print(f"Typed Year '{year}'")
-            else:
-                print(f"Failed to type Year.")
+                print(f"✅ Entered Year '{year}'")
                 
         elif action == "type_fullname":
             first_name = "Ivan"
@@ -452,35 +464,95 @@ def take_action(driver, device_name, screen_size, element_identifier, action):
             success_first = fill_input_field(driver, device_name, 'First name', first_name)
             success_last = fill_input_field(driver, device_name, 'Last name', last_name)
             if success_first and success_last:
-                print(f"Typed full name '{first_name} {last_name}'")
-            else:
-                print(f"Failed to type full name.")
+                print(f"✅ Typed full name '{first_name} {last_name}'")
                 
         elif action == "solve_captcha":
-            print("🎯 Using ADVANCED CAPTCHA solving method...")
+            print("🎯 Using ADVANCED CAPTCHA solving...")
             success = solve_captcha_advanced(driver, device_name, screen_size)
             if success:
-                print("🎉 CAPTCHA solved with advanced method!")
+                print("🎉 CAPTCHA solved!")
+            
+        # CORRECTED POST-CAPTCHA ACTIONS
+        elif action == "wait_auth":
+            print("⏳ Waiting for authentication to complete...")
+            # Use comp.py's wait_authentication logic
+            for _ in range(45):  # 90 seconds max
+                try:
+                    progress_bars = driver.find_elements(AppiumBy.CLASS_NAME, "android.widget.ProgressBar")
+                    visible = []
+                    for bar in progress_bars:
+                        try:
+                            if bar.is_displayed():
+                                visible.append(bar)
+                        except:
+                            continue
+                    
+                    if not visible:
+                        print("✅ Authentication complete")
+                        time.sleep(3)
+                        break
+                        
+                except:
+                    pass
+                time.sleep(2)
+                
+        elif action == "click_next":
+            print("⏭️ Clicking NEXT button...")
+            success = press_button(driver, "NEXT") or press_button(driver, "Next")
+            if success:
+                print("✅ Clicked NEXT")
             else:
-                print("⚠️ Advanced CAPTCHA method had issues, but continuing...")
+                print("⚠️ NEXT button not found, continuing...")
+                
+        elif action == "click_maybe_later":
+            print("⏭️ Clicking MAYBE LATER button...")  
+            success = press_button(driver, "MAYBE LATER") or press_button(driver, "Maybe later") or press_button(driver, "Not now")
+            if success:
+                print("✅ Clicked MAYBE LATER")
+            else:
+                print("⚠️ MAYBE LATER button not found, continuing...")
+                
+        elif action == "click_accept":
+            print("⏭️ Clicking ACCEPT button...")
+            success = press_button(driver, "ACCEPT") or press_button(driver, "Accept")
+            if success:
+                print("✅ Clicked ACCEPT")
+            else:
+                print("⚠️ ACCEPT button not found, continuing...")
+                
+        elif action == "click_continue":
+            print("⏭️ Clicking CONTINUE TO OUTLOOK button...")
+            success = press_button(driver, "CONTINUE TO OUTLOOK") or press_button(driver, "Continue to Outlook") 
+            if success:
+                print("✅ Clicked CONTINUE TO OUTLOOK")
+            else:
+                print("⚠️ CONTINUE TO OUTLOOK button not found, continuing...")
+            
+        elif action == "inbox_reached":
+            print("🎊 INBOX REACHED! Outlook account creation completed successfully!")
+            return "COMPLETED"
+            
+        elif action == "wait":
+            print("⏳ Waiting...")
+            time.sleep(3)
             
     except Exception as e:
-        print(f"Error performing action: {e}")
+        print(f"❌ Error performing action: {e}")
+        
+    return "CONTINUE"
 
-def take_screenshot(device_id, screenshot_number, crop_status_bar=True):
-    """EXACT same as your main.py"""
+# ================== SCREENSHOT (EXACT FROM main.py) ==================
+def take_screenshot(device_id, crop_status_bar=True):
     screenshot_base_dir = os.path.join(screenshots_folder)
     screen_shot_file_name = "screenshot.png"
     screenshot_file = os.path.join(screenshot_base_dir, screen_shot_file_name)
     
-    # remove old if present
     if os.path.exists(screenshot_file):
         try:
             os.remove(screenshot_file)
         except Exception:
             pass
 
-    # run screencap on device
     try:
         cp = subprocess.run(["adb", "-s", device_id, "shell", "screencap", "-p", "/sdcard/screen.png"], capture_output=True, text=True)
         if cp.returncode != 0:
@@ -490,7 +562,6 @@ def take_screenshot(device_id, screenshot_number, crop_status_bar=True):
         print(f"Error running adb screencap: {e}")
         return None
 
-    # pull with retries
     pulled = False
     for attempt in range(3):
         try:
@@ -521,17 +592,15 @@ def take_screenshot(device_id, screenshot_number, crop_status_bar=True):
 
     return screenshot_file
 
-# ================== MAIN LOOP (EXACT FROM main.py) ==================
+# ================== MAIN LOOP (CORRECTED FLOW) ==================
 def main():
-    """EXACT same main loop as your main.py but with ADVANCED CAPTCHA"""
-    print("🤖 CAPTCHA FIXED: Agentic Outlook Automation")
-    print("=" * 60)
-    print("✅ Driver setup: comp.py (bulletproof)")
-    print("✅ Agent logic: agent.py (enhanced with fallbacks)")  
-    print("✅ Action methods: main.py (exact replica)")
-    print("✅ CAPTCHA method: comp.py (advanced but 10 seconds)")
-    print("✅ Main loop: main.py (exact replica)")
-    print("=" * 60)
+    """CORRECTED complete flow with exact sequence"""
+    print("🤖 CORRECTED FLOW: Agentic Outlook Automation to Inbox")
+    print("=" * 70)
+    print("✅ EXACT FLOW: Authentication → Your Data, Your Way → Add another account → Getting Better Together → Powering Your Experiences → INBOX")
+    print("✅ SUCCESS: Looks for 'INBOX' text (not 'Search')")
+    print("✅ METHOD: Screenshot + Agent analysis throughout")
+    print("=" * 70)
     
     # Setup driver using comp.py method
     driver, device_name, screen_size = setup_driver()
@@ -541,23 +610,23 @@ def main():
     
     completed = False
     attempt_count = 0
-    max_attempts = 25  # Prevent infinite loops
+    max_attempts = 50  # More attempts for complete flow
+    captcha_completed = False
 
     while not completed and attempt_count < max_attempts:
         attempt_count += 1
         print(f"\\n🔄 Attempt {attempt_count}/{max_attempts}")
         
+        # Take screenshot and OCR
         text = ""
         screenshot_attempts = 0
-        max_screenshot_attempts = 5
+        max_screenshot_attempts = 3
 
-        # Get screenshot and OCR (with retries)
         while len(text) == 0 and screenshot_attempts < max_screenshot_attempts:
             screenshot_attempts += 1
             print(f"📸 Screenshot attempt {screenshot_attempts}/{max_screenshot_attempts}")
             
-            device_to_use = device_name if device_name else 'emulator-5554'
-            screenshot_path = take_screenshot(device_to_use, 1, crop_status_bar=True)
+            screenshot_path = take_screenshot(device_name, crop_status_bar=True)
             if not screenshot_path:
                 print("❌ Failed to get screenshot, waiting and retrying...")
                 time.sleep(2)
@@ -576,61 +645,76 @@ def main():
             time.sleep(3)
             continue
 
-        # Analyze and act (EXACT same as main.py)
-        if text:
-            try:
-                print("\\n🤖 Analyzing screen content...")
-                analysis_result = analyze_screen_content(text)
-                
-                if analysis_result is None:
-                    print("❌ Agent returned None, skipping this iteration")
-                    time.sleep(2)
-                    continue
-                    
-                print(f"🤖 Raw agent response: {analysis_result}")
-                
-                # Clean response in case of markdown formatting
-                cleaned_result = analysis_result.strip()
-                if cleaned_result.startswith('```json'):
-                    cleaned_result = cleaned_result[7:]
-                if cleaned_result.endswith('```'):
-                    cleaned_result = cleaned_result[:-3]
-                cleaned_result = cleaned_result.strip()
-                
-                action = json.loads(cleaned_result)
-                print(f"🤖 Parsed action: {action}")
-                
-                if action.get("action") and action.get("element_identifier"):
-                    print(f"⚡ Executing action: {action['action']} on {action['element_identifier']}")
-                    take_action(driver, device_name, screen_size, action["element_identifier"], action["action"])
-                    
-                    # ALWAYS try Next button (except after captcha)
-                    if action["action"] != "solve_captcha":
-                        print("⏭️ Trying to press Next button...")
-                        press_button(driver, "Next")
-                    
-                    # Check completion condition
-                    if action["element_identifier"] == "Captcha":
-                        print("🎉 CAPTCHA completed! Account creation should be done.")
-                        completed = True
-                else:
-                    print("⚠️ No valid action found, waiting...")
-                    time.sleep(3)
-                    
-            except json.JSONDecodeError as e:
-                print(f"❌ JSON decode error: {e}")
-                print(f"❌ Raw response was: {analysis_result}")
+        # Analyze with agent and act
+        try:
+            print("\\n🤖 Analyzing screen content...")
+            analysis_result = analyze_screen_content(text)
+            
+            if analysis_result is None:
+                print("❌ Agent returned None, skipping this iteration")
                 time.sleep(2)
-            except Exception as e:
-                print(f"❌ Error processing action: {e}")
-                time.sleep(2)
+                continue
+                
+            print(f"🤖 Raw agent response: {analysis_result}")
+            
+            # Clean response
+            cleaned_result = analysis_result.strip()
+            if cleaned_result.startswith('```json'):
+                cleaned_result = cleaned_result[7:]
+            if cleaned_result.endswith('```'):
+                cleaned_result = cleaned_result[:-3]
+            cleaned_result = cleaned_result.strip()
+            
+            action = json.loads(cleaned_result)
+            print(f"🤖 Parsed action: {action}")
+            
+            if action.get("action") and action.get("element_identifier"):
+                print(f"⚡ Executing action: {action['action']} on {action['element_identifier']}")
+                
+                result = take_action(driver, device_name, screen_size, action["element_identifier"], action["action"])
+                
+                # Check completion
+                if result == "COMPLETED":
+                    print("🎊 COMPLETE SUCCESS! Outlook account created and INBOX opened!")
+                    completed = True
+                    break
+                    
+                # Track CAPTCHA completion
+                if action["action"] == "solve_captcha":
+                    captcha_completed = True
+                    print("🎯 CAPTCHA phase completed, now handling post-CAPTCHA flow...")
+                    
+                # For account creation phase, always try Next (except after CAPTCHA)
+                if not captcha_completed and action["action"] not in ["solve_captcha", "wait_auth", "inbox_reached"]:
+                    print("⏭️ Trying to press Next button (account creation phase)...")
+                    press_button(driver, "Next")
+                    
+            else:
+                print("⚠️ No valid action found, waiting...")
+                time.sleep(3)
+                
+        except json.JSONDecodeError as e:
+            print(f"❌ JSON decode error: {e}")
+            print(f"❌ Raw response was: {analysis_result}")
+            time.sleep(2)
+        except Exception as e:
+            print(f"❌ Error processing action: {e}")
+            time.sleep(2)
         
         time.sleep(2)  # Small delay between iterations
 
     if completed:
-        print("\\n🎊 AUTOMATION COMPLETED SUCCESSFULLY!")
+        print("\\n🎊🎊🎊 COMPLETE SUCCESS! 🎊🎊🎊")
+        print("✅ Outlook account created successfully")  
+        print("✅ All post-CAPTCHA screens handled")
+        print("✅ INBOX opened and ready to use")
+        print("🎉 AUTOMATION COMPLETED!")
     else:
         print(f"\\n⚠️ Automation stopped after {max_attempts} attempts")
+        if captcha_completed:
+            print("✅ Account creation completed, but inbox not fully reached")
+        else:
+            print("⚠️ Did not complete account creation")
     
     # Cleanup
     try:
